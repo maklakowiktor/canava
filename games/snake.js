@@ -1,5 +1,6 @@
 import { Renderer } from '../core/renderer.js';
 import { randInt } from '../core/math2d.js';
+import { Physics } from '../core/physics.js';
 
 export class SnakeGame {
   constructor(engine) {
@@ -8,7 +9,10 @@ export class SnakeGame {
     this.snake = [{ x: 5, y: 5 }];
     this.speed = 0.25;
     this.dir = { x: 1*this.speed, y: 0 };
-    this.food = { x: randInt(0, 19), y: randInt(0, 19) };
+    this.food = { 
+      x: randInt(0, 19), 
+      y: randInt(0, 19),
+    };
     this.cellSize = 20;
     this.cols = 40;
     this.rows = 30;
@@ -16,7 +20,32 @@ export class SnakeGame {
 
     this.assetsLoaded = false;
 
+    this._loadAssets();
+
     document.addEventListener('keydown', this.handleInput.bind(this));
+  }
+
+  _loadAssets() {
+    const loader = this.engine.loader;
+    if (loader.images.size === 0 || loader.images.sounds.size === 0) {
+      try {
+        loader
+          .loadAll({
+            images: {
+              apple: './assets/images/apple.png',
+            },
+            sounds: {
+              eat: './assets/sounds/apple-bite.wav',
+            }
+          })
+          .then((_) => {
+            this.assetsLoaded = true;
+            console.log('assets loaded');
+          });
+      } catch (err) {
+        throw Exception("failed to load assets");
+      }
+    }
   }
 
   handleInput(e) {
@@ -63,26 +92,14 @@ export class SnakeGame {
     this.renderer.drawRect(0, 0, this.engine.canvas.width, this.engine.canvas.height, '#222');
 
     if (!this.assetsLoaded) {
-      // draw loading
-      const loader = this.engine.loader;
-      if (loader.images.size === 0 || loader.images.sounds.size === 0) {
-        try {
-          await loader.loadAll({
-            images: {
-              apple: './assets/images/apple.png',
-            },
-            sounds: {
-              eat: './assets/sounds/apple-bite.wav',
-            }
-          });
-          this.assetsLoaded = true;
-        } catch (err) {
-          throw Exception("failed to load assets");
-        }
-      }
+      // TODO: draw loading screen
+      ctx.font = "48px serif";
+      ctx.fillStyle = 'white';
+      // FIXME: align by center
+      ctx.fillText("Loading assets...", this.engine.canvas.width / 4, this.engine.canvas.height / 4);
+      // this.renderer.drawRect(this.cellSize, this.cellSize, this.cellSize, this.cellSize, 'lime');
       return;
     }
-
 
     // Snake
     for (const segment of this.snake) {
